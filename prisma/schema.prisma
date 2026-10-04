@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id               Int              @id @default(autoincrement())
+  name             String
+  description      String           @default("")
+  price            Int
+  type             String           @default("EBOOK")
+  currentVersionId Int?
+  createdAt        DateTime         @default(now())
+  versions         ProductVersion[]
+  purchases        Purchase[]
+}
+
+model ProductVersion {
+  id        Int        @id @default(autoincrement())
+  productId Int
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  version   String
+  fileName  String
+  filePath  String
+  fileSize  Int
+  mime      String     @default("application/octet-stream")
+  createdAt DateTime   @default(now())
+  purchases Purchase[]
+}
+
+model Purchase {
+  id            Int          @id @default(autoincrement())
+  productId     Int
+  product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  versionId     Int
+  version       ProductVersion @relation(fields: [versionId], references: [id])
+  buyerName     String
+  buyerEmail    String
+  licenseKey    String       @unique
+  maxDownloads  Int          @default(5)
+  downloadsUsed Int          @default(0)
+  purchasedAt   DateTime     @default(now())
+  notifications Notification[]
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  message    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
